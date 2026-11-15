@@ -1,3 +1,15 @@
+module "portfolio_site_tfstate" {
+  source      = "./modules/tfstate-access"
+  policy_name = "portfolio-site-tfstate"
+  bucket_arn  = aws_s3_bucket.state_bucket.arn
+  state_keys  = ["portfolio-site/terraform.tfstate"]
+}
+
+moved {
+  from = aws_iam_policy.portfolio_site_tfstate
+  to   = module.portfolio_site_tfstate.aws_iam_policy.this
+}
+
 resource "aws_iam_role" "github_portfolio_site_plan" {
   name               = "github-portfolio-site-plan"
   assume_role_policy = data.aws_iam_policy_document.github_portfolio_site_plan_trust.json
@@ -52,52 +64,14 @@ data "aws_iam_policy_document" "github_portfolio_site_apply_trust" {
   }
 }
 
-# Managed policy for the GitHub OIDC role to access the S3 bucket for Terraform state
-resource "aws_iam_policy" "portfolio_site_tfstate" {
-  name   = "portfolio-site-tfstate"
-  policy = data.aws_iam_policy_document.portfolio_site_tfstate.json
-}
-
-data "aws_iam_policy_document" "portfolio_site_tfstate" {
-  statement {
-    effect  = "Allow"
-    sid     = "ListStatePrefix"
-    actions = ["s3:ListBucket"]
-    resources = [
-      aws_s3_bucket.state_bucket.arn,
-    ]
-    condition {
-      test     = "StringEquals"
-      variable = "s3:prefix"
-      values   = [local.portfolio_state_key]
-    }
-  }
-  statement {
-    effect  = "Allow"
-    sid     = "ReadWriteState"
-    actions = ["s3:GetObject", "s3:PutObject"]
-    resources = [
-      "${aws_s3_bucket.state_bucket.arn}/${local.portfolio_state_key}",
-    ]
-  }
-  statement {
-    effect  = "Allow"
-    sid     = "ManageStateLock"
-    actions = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
-    resources = [
-      "${aws_s3_bucket.state_bucket.arn}/${local.portfolio_state_key}.tflock",
-    ]
-  }
-}
-
 resource "aws_iam_role_policy_attachment" "github_portfolio_site_plan" {
   role       = aws_iam_role.github_portfolio_site_plan.name
-  policy_arn = aws_iam_policy.portfolio_site_tfstate.arn
+  policy_arn = module.portfolio_site_tfstate.policy_arn
 }
 
 resource "aws_iam_role_policy_attachment" "github_portfolio_site_apply" {
   role       = aws_iam_role.github_portfolio_site_apply.name
-  policy_arn = aws_iam_policy.portfolio_site_tfstate.arn
+  policy_arn = module.portfolio_site_tfstate.policy_arn
 }
 
 data "aws_iam_policy_document" "github_portfolio_site_plan_read" {
