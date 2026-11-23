@@ -1,4 +1,4 @@
-
+### Portfolio Site Project Variables ###
 variable "github_owner" {
   type        = string
   default     = "kuxar1"
@@ -22,3 +22,23 @@ variable "github_repo_id" {
   default     = "1430942197"
   description = "GitHub repository ID for the repository"
 }
+
+### ECS App Project Variables ###
+variable "gitlab_url" {
+  type        = string
+  default     = "https://gitlab.com"
+  description = "GitLab URL for the repository"
+}
+
+variable "gitlab_audience" {
+  type        = string
+  default     = "https://gitlab.com"
+  description = "GitLab audience for the repository"
+}
+
+variable "gitlab_project_path" {
+  type        = string
+  default     = "kuxar1/ecs-app"
+  description = "GitLab project path for the repository"
+}
+
